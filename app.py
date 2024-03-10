@@ -7,12 +7,15 @@ base_url = 'https://financialmodelingprep.com/api/v3/search'
 
 # Your API key
 api_key = 'lSu33p5drHdIaM3j25jlOyJKp9dI4XTQ'
-query = 'AAPL'  # Search query
+# list top 1
+query = ['AAPL', ]  # list 
+limit = 1
 
 # Function to get data and filter for NASDAQ
-def get_data(query, exchange='NASDAQ'):
+def get_data(query, limit, exchange='NASDAQ'):
     params = {
         'query': query,
+        'limit': limit,  # Limit the number of results to 1
         'apikey': api_key
     }
     
@@ -35,4 +38,4 @@ def get_data(query, exchange='NASDAQ'):
         return None
 
 # Get data and filter for NASDAQ exchange
-NASDAQ_data = get_data(query)
+NASDAQ_data = get_data(query, limit)
