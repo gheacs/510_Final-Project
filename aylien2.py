@@ -13,7 +13,7 @@ def get_auth_header(appid, apikey):
         'X-Application-Key': apikey
     }
 
-# Function to get stories for specific stock tickers
+# Function to get stories for specific companies
 def get_stories_for_tickers(tickers, headers):
     all_stories = []
     base_url = 'https://api.aylien.com/news/stories'
@@ -46,6 +46,7 @@ def get_stories_for_tickers(tickers, headers):
                 print(f"Failed to fetch stories for ticker {ticker}: {response.status_code} - {response.text}")
                 break
 
+    print(f"Total number of stories fetched for tickers {tickers}: {len(all_stories)}")
     return all_stories
 
 # Save data to CSV file
@@ -53,9 +54,8 @@ def save_data_to_csv(stories, file_name='aylien_news_stories.csv'):
     with open(file_name, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow([
-            'Article ID', 'Title', 'Published At', 'Summary', 'Sentences Count', 'Entity ID', 'Entity Text',
-            'Stock Tickers', 'Body Sentiment Polarity', 'Body Sentiment Confidence', 
-            'Title Sentiment Polarity', 'Title Sentiment Confidence', 'Category ID', 'Category Label', 
+            'Article ID', 'Title', 'Published At', 'Summary', 'Entity ID', 'Entity Text',
+            'Stock Tickers', 'Sentiment Polarity', 'Sentiment Confidence', 'Category ID', 'Category Label', 
             'Keywords', 'Article URL'
         ])
 
@@ -65,34 +65,31 @@ def save_data_to_csv(stories, file_name='aylien_news_stories.csv'):
             published_at = story.get('published_at', 'N/A')
             summary = story.get('summary', {}).get('sentences', [])
             summary_text = ' '.join(summary)
-            sentences_count = story.get('sentences_count', 0)
             permalink = story.get('links', {}).get('permalink', 'N/A')
             keywords = ", ".join(story.get('keywords', []))
 
-            body_sentiment = story.get('sentiment', {}).get('body', {})
-            body_sentiment_polarity = body_sentiment.get('polarity', 'N/A')
-            body_sentiment_confidence = body_sentiment.get('confidence', 'N/A')
+            sentiment = story.get('sentiment', {}).get('title', {})
+            sentiment_polarity = sentiment.get('polarity', 'N/A')
+            sentiment_confidence = story.get('sentiment', {}).get('body', {}).get('score', 'N/A')
 
-            title_sentiment = story.get('sentiment', {}).get('title', {})
-            title_sentiment_polarity = title_sentiment.get('polarity', 'N/A')
-            title_sentiment_confidence = title_sentiment.get('confidence', 'N/A')
 
             entities = story.get('entities', [])
             categories = story.get('categories', [])
 
-            entity_id = ', '.join([entity.get('id', 'N/A') for entity in entities])
-            entity_text = ', '.join([entity.get('text', 'N/A') for entity in entities])
-            stock_tickers = ', '.join([ticker for entity in entities for ticker in entity.get('stock_tickers', [])])
+            for entity in entities:
+                entity_id = entity.get('id', 'N/A')
+                entity_text = entity.get('text', 'N/A')
+                stock_tickers = ", ".join(entity.get('stock_tickers', []))
 
-            category_id = ', '.join([category.get('id', 'N/A') for category in categories])
-            category_label = ', '.join([category.get('label', 'N/A') for category in categories])
+                for category in categories:
+                    category_id = category.get('id', 'N/A')
+                    category_label = category.get('label', 'N/A')
 
-            writer.writerow([
-                article_id, title, published_at, summary_text, sentences_count, entity_id, entity_text,
-                stock_tickers, body_sentiment_polarity, body_sentiment_confidence,
-                title_sentiment_polarity, title_sentiment_confidence, category_id, category_label, 
-                keywords, permalink
-            ])
+                    writer.writerow([
+                        article_id, title, published_at, summary_text, entity_id, entity_text,
+                        stock_tickers, sentiment_polarity, sentiment_confidence, category_id, category_label, 
+                        keywords, permalink
+                    ])
 
     print(f"Data has been written to {file_name}")
 
